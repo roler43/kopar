@@ -1,0 +1,7 @@
+aiogram
+aiocryptopay
+requests
+fake-useragent
+aiohttp
+python-dotenv
+telethon
