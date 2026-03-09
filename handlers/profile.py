@@ -9,7 +9,7 @@ from database import db
 from keyboards import get_profile_keyboard, get_vip_keyboard, get_payment_keyboard, get_back_to_main_keyboard, get_main_keyboard
 from emojis import Emojis
 from payment import create_payment
-from config import PROFILE_IMAGE, BOT_USERNAME
+from config import PROFILE_IMAGE, VIP_IMAGE, BOT_USERNAME  # Добавлен VIP_IMAGE
 
 router = Router()
 
@@ -40,7 +40,7 @@ async def profile_command(callback: CallbackQuery, state: FSMContext):
         await callback.answer()
         return
     
-    # Распаковываем данные пользователя (13 полей)
+    # Распаковываем данные пользователя (14 полей)
     (user_id, username, first_name, last_name, 
      joined_date, last_flood, floods_count, is_admin, is_banned, 
      sub_type, sub_until, total_payments, free_trial_used, name_checked) = user_data
@@ -170,13 +170,22 @@ async def buy_vip(callback: CallbackQuery):
     )
     
     # Отправляем картинку VIP
-    photo = FSInputFile(VIP_IMAGE)
-    await callback.message.answer_photo(
-        photo=photo,
-        caption=vip_text,
-        reply_markup=get_vip_keyboard(),
-        parse_mode="HTML"
-    )
+    try:
+        photo = FSInputFile(VIP_IMAGE)
+        await callback.message.answer_photo(
+            photo=photo,
+            caption=vip_text,
+            reply_markup=get_vip_keyboard(),
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        print(f"Ошибка отправки VIP картинки: {e}")
+        # Если ошибка с картинкой, отправляем без неё
+        await callback.message.answer(
+            vip_text,
+            reply_markup=get_vip_keyboard(),
+            parse_mode="HTML"
+        )
     await callback.answer()
 
 @router.callback_query(F.data.startswith("buy_"))
@@ -206,13 +215,21 @@ async def process_buy(callback: CallbackQuery):
         )
         
         # Отправляем картинку VIP
-        photo = FSInputFile(VIP_IMAGE)
-        await callback.message.answer_photo(
-            photo=photo,
-            caption=payment_text,
-            reply_markup=get_payment_keyboard(result['pay_url']),
-            parse_mode="HTML"
-        )
+        try:
+            photo = FSInputFile(VIP_IMAGE)
+            await callback.message.answer_photo(
+                photo=photo,
+                caption=payment_text,
+                reply_markup=get_payment_keyboard(result['pay_url']),
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"Ошибка отправки VIP картинки: {e}")
+            await callback.message.answer(
+                payment_text,
+                reply_markup=get_payment_keyboard(result['pay_url']),
+                parse_mode="HTML"
+            )
     else:
         error_text = f"{Emojis.ERROR} <b>Ошибка создания платежа</b>\n\n{result['error']}"
         
